@@ -8,10 +8,11 @@ using System.IO;
 using System.Threading;
 using MyMovies.Models;
 using Newtonsoft.Json;
+using MyMovies.Repository.Interface;
 
 namespace MyMovies.Repository
 {
-    public class MoviesAPICommunicationRepository
+    public class MoviesAPICommunicationRepository: IMoviesAPICommunicationRepository
     {
         private readonly HttpClient _httpClient;
         private string _baseUrl;
@@ -26,7 +27,7 @@ namespace MyMovies.Repository
             _secureHeaderValue = secureHeaderValue;
         }
 
-        public async Task<List<MovieDto>> GetMovies(string fromSource)
+        public async Task<List<MovieDto>> GetMoviesFromSource(string fromSource)
         {
             var url = $"{_baseUrl}/api/{fromSource}/movies";
             _httpClient.DefaultRequestHeaders.Add(_secureHeader, _secureHeaderValue);
@@ -35,6 +36,7 @@ namespace MyMovies.Repository
             var result = JsonConvert.DeserializeObject<List<MovieDto>>(responseString);
             return result;
         }
+
 
         private HttpClient CreateWorkaroundClient()
         {

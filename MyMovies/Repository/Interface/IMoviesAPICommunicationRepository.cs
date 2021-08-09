@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace MyMovies.Repository.Interface
 {
-    interface IMoviesAPICommunicationRepository
+    public interface IMoviesAPICommunicationRepository
     {
-        Task<List<MovieDto>> GetMovies(string fromSource);
+        Task<List<MovieDto>> GetMoviesFromSource(string fromSource);
     }
 }

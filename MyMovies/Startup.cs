@@ -28,6 +28,8 @@ namespace MyMovies
             {
                 configuration.RootPath = "ClientApp/build";
             });
+
+            services.AddMoviesAPICommunicationRepository(Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
