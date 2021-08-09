@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using MyMovies.Models;
+using MyMovies.Service;
+using Serilog;
 
 namespace MyMovies
 {
@@ -29,7 +33,21 @@ namespace MyMovies
                 configuration.RootPath = "ClientApp/build";
             });
 
-            services.AddMoviesAPICommunicationRepository(Configuration);
+            services.AddMoviesAPICommunicationRepository();
+            services.AddTransient<IJsonReaderService, JsonReaderService>();
+            Log.Logger = new LoggerConfiguration()
+                 .WriteTo.File("log.txt")
+                 .MinimumLevel.Debug()
+                 .Enrich.FromLogContext()
+                 .CreateLogger();
+            // Add logging
+            services.AddSingleton(LoggerFactory.Create(builder =>
+            {
+                builder
+                    .AddSerilog(dispose: true);
+            }));
+
+            services.AddLogging();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

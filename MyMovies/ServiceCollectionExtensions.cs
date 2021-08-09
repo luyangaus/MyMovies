@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using MyMovies.Repository;
 using MyMovies.Repository.Interface;
+using MyMovies.Service;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,11 +12,9 @@ namespace MyMovies
 {
     public static class ServiceCollectionExtensions
     {
-        public static void AddMoviesAPICommunicationRepository(this IServiceCollection services, IConfiguration configuration)
+        public static void AddMoviesAPICommunicationRepository(this IServiceCollection services)
         {
-            services.AddTransient<IMoviesAPICommunicationRepository>(s =>
-                new MoviesAPICommunicationRepository(configuration["MovieAPIURL"],
-                    configuration["MovieHeader"], configuration["MovieHeaderValue"]));
+            services.AddTransient<IMoviesAPICommunicationRepository,MoviesAPICommunicationRepository>();
         }
     }
 }

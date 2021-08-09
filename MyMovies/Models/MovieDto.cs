@@ -5,8 +5,14 @@ using System.Threading.Tasks;
 
 namespace MyMovies.Models
 {
+    public class MovieContainer
+    {
+        public List<MovieDto> Movies { get; set; }
+    }
+
     public class MovieDto
     {
+        public string SiteName { get; set; }
         public string Title { get; set; }
         public string Year { get; set; }
         public string Rated { get; set; }
@@ -26,6 +32,6 @@ namespace MyMovies.Models
         public string Votes { get; set; }
         public string ID { get; set; }
         public string Type { get; set; }
-        public string Price { get; set; }
+        public decimal Price { get; set; }
     }
 }

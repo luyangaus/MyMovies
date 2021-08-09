@@ -26,8 +26,23 @@ namespace MyMovies.Controllers
         [HttpGet("GetMovies")]
         public async Task<List<MovieDto>> GetMovies()
         {
-            var result = await _moviesAPICommunicationRepository.GetMoviesFromSource("cinemaworld");
-            return new List<MovieDto>();
+            var allMovies = await _moviesAPICommunicationRepository.GetMoviesFromSource();
+            var allMovieDetails = await _moviesAPICommunicationRepository.GetMovieById(allMovies);
+
+            var movieWithLowestPrice =
+            allMovieDetails
+                .GroupBy(x => x.Title)
+                .Select(x => new MovieDto
+                {
+                    SiteName = x.FirstOrDefault().SiteName,
+                    Title = x.Key,
+                    Price = x.Min(x => x.Price),
+                    Year = x.FirstOrDefault().Year,
+                    Poster = x.FirstOrDefault().Poster,
+                    ID = x.FirstOrDefault().ID,
+                })
+                .ToList();
+            return movieWithLowestPrice;
         }
     }
 }

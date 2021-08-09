@@ -9,59 +9,106 @@ using System.Threading;
 using MyMovies.Models;
 using Newtonsoft.Json;
 using MyMovies.Repository.Interface;
+using MyMovies.Service;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace MyMovies.Repository
 {
-    public class MoviesAPICommunicationRepository: IMoviesAPICommunicationRepository
+    public class MoviesAPICommunicationRepository : IMoviesAPICommunicationRepository
     {
-        private readonly HttpClient _httpClient;
-        private string _baseUrl;
-        private string _secureHeader;
-        private string _secureHeaderValue;
+        private IJsonReaderService _jsonReaderService;
+        private readonly IConfiguration _config;
+        private readonly ILogger _logger;
 
-        public MoviesAPICommunicationRepository(string baseURL, string secureHeader, string secureHeaderValue)
+        public MoviesAPICommunicationRepository(IJsonReaderService jsonReaderService, IConfiguration config, ILogger<MoviesAPICommunicationRepository> logger)
         {
-            _httpClient = CreateWorkaroundClient();
-            _baseUrl = baseURL;
-            _secureHeader = secureHeader;
-            _secureHeaderValue = secureHeaderValue;
+            _jsonReaderService = jsonReaderService;
+            _config = config;
+            _logger = logger;
         }
 
-        public async Task<List<MovieDto>> GetMoviesFromSource(string fromSource)
+        public async Task<List<MovieDto>> GetMoviesFromSource()
         {
-            var url = $"{_baseUrl}/api/{fromSource}/movies";
-            _httpClient.DefaultRequestHeaders.Add(_secureHeader, _secureHeaderValue);
-            var response = await _httpClient.GetAsync(url);
-            var responseString = await new StreamReader(await response.Content.ReadAsStreamAsync()).ReadToEndAsync();
-            var result = JsonConvert.DeserializeObject<List<MovieDto>>(responseString);
+            var apiSourceFilePath = _config.GetSection("APISourceFile").Get<string>();
+            var aPIs = _jsonReaderService.ReadAPISourceInfo(apiSourceFilePath);
+            var getMoviesApi = aPIs.Where(api => api.APIUsage == "GetAllMovies");
+            var result = new List<MovieDto>();
+
+            Parallel.ForEach(getMoviesApi, new ParallelOptions() { MaxDegreeOfParallelism = 2 }, api =>
+            {
+                try
+                {
+                    var httpClient = CreateWorkaroundClient();
+                    httpClient.DefaultRequestHeaders.Add(api.AccessHeader, api.AccessHeaderValue);
+                    var response = httpClient.GetAsync(api.BaseURL).Result;
+                    var responseString = new StreamReader(response.Content.ReadAsStreamAsync().Result).ReadToEndAsync().Result;
+                    var movies = JsonConvert.DeserializeObject<MovieContainer>(responseString).Movies;
+                    movies.ForEach(m => m.SiteName = api.SiteName);
+                    result.AddRange(movies);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e.Message);
+                }
+            });
+
             return result;
         }
 
-
-        private HttpClient CreateWorkaroundClient()
+        public async Task<List<MovieDto>> GetMovieById(List<MovieDto> request)
         {
-            SocketsHttpHandler handler = new SocketsHttpHandler
-            {
-                ConnectCallback = IPv4ConnectAsync
-            };
-            return new HttpClient(handler);
+            var apiSourceFilePath = _config.GetSection("APISourceFile").Get<string>();
+            var aPIs = _jsonReaderService.ReadAPISourceInfo(apiSourceFilePath);
+            var getMovieApi = aPIs.Where(api => api.APIUsage == "GetMovieById");
+            var result = new List<MovieDto>();
 
-            static async ValueTask<Stream> IPv4ConnectAsync(SocketsHttpConnectionContext context, CancellationToken cancellationToken)
+            Parallel.ForEach(request, new ParallelOptions() { MaxDegreeOfParallelism = 10 }, req =>
             {
-                Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                socket.NoDelay = true;
-
                 try
                 {
-                    await socket.ConnectAsync(context.DnsEndPoint, cancellationToken).ConfigureAwait(false);
-                    return new NetworkStream(socket, ownsSocket: true);
+                    var api = getMovieApi.Where(api => api.SiteName == req.SiteName).FirstOrDefault();
+                    var httpClient = CreateWorkaroundClient();
+                    httpClient.DefaultRequestHeaders.Add(api.AccessHeader, api.AccessHeaderValue);
+                    var response = httpClient.GetAsync($"{api.BaseURL}/{req.ID}").Result;
+                    var responseString = new StreamReader(response.Content.ReadAsStreamAsync().Result).ReadToEndAsync().Result;
+                    var movie = JsonConvert.DeserializeObject<MovieDto>(responseString);
+                    movie.SiteName = api.SiteName;
+                    result.Add(movie);
                 }
-                catch
+                catch (Exception e)
                 {
-                    socket.Dispose();
-                    throw;
+                    _logger.LogError(e.Message);
                 }
-            }
+           });
+
+            return result;
         }
+
+        private HttpClient CreateWorkaroundClient()
+{
+    SocketsHttpHandler handler = new SocketsHttpHandler
+    {
+        ConnectCallback = IPv4ConnectAsync
+    };
+    return new HttpClient(handler);
+
+    static async ValueTask<Stream> IPv4ConnectAsync(SocketsHttpConnectionContext context, CancellationToken cancellationToken)
+    {
+        Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        socket.NoDelay = true;
+
+        try
+        {
+            await socket.ConnectAsync(context.DnsEndPoint, cancellationToken).ConfigureAwait(false);
+            return new NetworkStream(socket, ownsSocket: true);
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
+    }
+}
     }
 }
