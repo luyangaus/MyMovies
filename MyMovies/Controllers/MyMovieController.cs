@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using MyMovies.Application;
 using MyMovies.Models;
 using MyMovies.Repository.Interface;
 
@@ -27,20 +28,8 @@ namespace MyMovies.Controllers
         {
             var allMovies = await _moviesAPICommunicationRepository.GetMoviesFromSource();
             var allMovieDetails = await _moviesAPICommunicationRepository.GetMovieById(allMovies);
+            var movieWithLowestPrice = MovieDetailsHelper.GetCheapestMovie(allMovieDetails);
 
-            var movieWithLowestPrice =
-                allMovieDetails
-                    .GroupBy(x => x.Title)
-                    .Select(x => new MovieDto
-                    {
-                        SiteName = x.FirstOrDefault().SiteName,
-                        Title = x.Key,
-                        Price = x.Min(x => x.Price),
-                        Year = x.FirstOrDefault().Year,
-                        Poster = x.FirstOrDefault().Poster,
-                        ID = x.FirstOrDefault().ID
-                    })
-                    .ToList();
             return movieWithLowestPrice;
         }
     }

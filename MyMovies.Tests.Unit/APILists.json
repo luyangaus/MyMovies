@@ -1,0 +1,32 @@
+{
+  "APISourceInfos": [
+    {
+      "SiteName": "filmworld",
+      "BaseURL": "http://webjetapitest.azurewebsites.net/api/filmworld/movies",
+      "AccessHeader": "x-access-token",
+      "AccessHeaderValue": "sjd1HfkjU83ksdsm3802k",
+      "APIUsage": "GetAllMovies"
+    },
+    {
+      "SiteName": "cinemaworld",
+      "BaseURL": "http://webjetapitest.azurewebsites.net/api/cinemaworld/movies",
+      "AccessHeader": "x-access-token",
+      "AccessHeaderValue": "sjd1HfkjU83ksdsm3802k",
+      "APIUsage": "GetAllMovies"
+    },
+    {
+      "SiteName": "filmworld",
+      "BaseURL": "http://webjetapitest.azurewebsites.net/api/filmworld/movie",
+      "AccessHeader": "x-access-token",
+      "AccessHeaderValue": "sjd1HfkjU83ksdsm3802k",
+      "APIUsage": "GetMovieById"
+    },
+    {
+      "SiteName": "cinemaworld",
+      "BaseURL": "http://webjetapitest.azurewebsites.net/api/cinemaworld/movie",
+      "AccessHeader": "x-access-token",
+      "AccessHeaderValue": "sjd1HfkjU83ksdsm3802k",
+      "APIUsage": "GetMovieById"
+    }
+  ]
+}
