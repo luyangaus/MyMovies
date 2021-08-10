@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MyMovies.Models;
 using MyMovies.Repository.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace MyMovies.Controllers
 {
@@ -14,10 +12,11 @@ namespace MyMovies.Controllers
     [ApiController]
     public class MyMovieController : ControllerBase
     {
-        private readonly IMoviesAPICommunicationRepository _moviesAPICommunicationRepository;
         private readonly ILogger<MyMovieController> _logger;
+        private readonly IMoviesAPICommunicationRepository _moviesAPICommunicationRepository;
 
-        public MyMovieController(IMoviesAPICommunicationRepository moviesAPICommunicationRepository, ILogger<MyMovieController> logger) :base()
+        public MyMovieController(IMoviesAPICommunicationRepository moviesAPICommunicationRepository,
+            ILogger<MyMovieController> logger)
         {
             _moviesAPICommunicationRepository = moviesAPICommunicationRepository;
             _logger = logger;
@@ -30,18 +29,18 @@ namespace MyMovies.Controllers
             var allMovieDetails = await _moviesAPICommunicationRepository.GetMovieById(allMovies);
 
             var movieWithLowestPrice =
-            allMovieDetails
-                .GroupBy(x => x.Title)
-                .Select(x => new MovieDto
-                {
-                    SiteName = x.FirstOrDefault().SiteName,
-                    Title = x.Key,
-                    Price = x.Min(x => x.Price),
-                    Year = x.FirstOrDefault().Year,
-                    Poster = x.FirstOrDefault().Poster,
-                    ID = x.FirstOrDefault().ID,
-                })
-                .ToList();
+                allMovieDetails
+                    .GroupBy(x => x.Title)
+                    .Select(x => new MovieDto
+                    {
+                        SiteName = x.FirstOrDefault().SiteName,
+                        Title = x.Key,
+                        Price = x.Min(x => x.Price),
+                        Year = x.FirstOrDefault().Year,
+                        Poster = x.FirstOrDefault().Poster,
+                        ID = x.FirstOrDefault().ID
+                    })
+                    .ToList();
             return movieWithLowestPrice;
         }
     }

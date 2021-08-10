@@ -1,10 +1,6 @@
-using AutoMapper;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using MyMovies.Models;
 using Newtonsoft.Json;
@@ -14,6 +10,7 @@ namespace MyMovies.Service
     public class JsonReaderService : IJsonReaderService
     {
         private readonly ILogger<JsonReaderService> _logger;
+
         public JsonReaderService(ILogger<JsonReaderService> logger)
         {
             _logger = logger;

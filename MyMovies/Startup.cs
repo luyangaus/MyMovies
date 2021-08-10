@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MyMovies.Models;
 using MyMovies.Service;
 using Serilog;
 
@@ -24,22 +22,18 @@ namespace MyMovies
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllersWithViews();
 
             // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration =>
-            {
-                configuration.RootPath = "ClientApp/build";
-            });
+            services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
 
             services.AddMoviesAPICommunicationRepository();
             services.AddTransient<IJsonReaderService, JsonReaderService>();
             Log.Logger = new LoggerConfiguration()
-                 .WriteTo.File("log.txt")
-                 .MinimumLevel.Debug()
-                 .Enrich.FromLogContext()
-                 .CreateLogger();
+                .WriteTo.File("log.txt")
+                .MinimumLevel.Debug()
+                .Enrich.FromLogContext()
+                .CreateLogger();
             // Add logging
             services.AddSingleton(LoggerFactory.Create(builder =>
             {
@@ -73,18 +67,15 @@ namespace MyMovies
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller}/{action=Index}/{id?}");
+                    "default",
+                    "{controller}/{action=Index}/{id?}");
             });
 
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
 
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
+                if (env.IsDevelopment()) spa.UseReactDevelopmentServer("start");
             });
         }
     }

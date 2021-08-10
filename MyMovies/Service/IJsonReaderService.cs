@@ -1,5 +1,5 @@
-﻿using MyMovies.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using MyMovies.Models;
 
 namespace MyMovies.Service
 {
