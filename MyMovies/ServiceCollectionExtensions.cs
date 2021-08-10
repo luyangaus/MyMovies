@@ -1,6 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using MyMovies.Infrastructure;
 using MyMovies.Repository;
-using MyMovies.Repository.Interface;
+using MyMovies.Interface;
+using System;
+using System.Net.Http;
 
 namespace MyMovies
 {
@@ -9,6 +12,7 @@ namespace MyMovies
         public static void AddMoviesAPICommunicationRepository(this IServiceCollection services)
         {
             services.AddTransient<IMoviesAPICommunicationRepository, MoviesAPICommunicationRepository>();
+            services.AddTransient<IHttpHandler, HttpHandler>();
         }
     }
 }

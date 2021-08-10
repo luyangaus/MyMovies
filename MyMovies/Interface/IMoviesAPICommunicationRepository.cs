@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using MyMovies.Models;
 
-namespace MyMovies.Repository.Interface
+namespace MyMovies.Interface
 {
     public interface IMoviesAPICommunicationRepository
     {

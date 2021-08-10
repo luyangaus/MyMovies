@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MyMovies.Models;
-using MyMovies.Repository.Interface;
+using MyMovies.Interface;
 using MyMovies.Service;
 using Newtonsoft.Json;
 
@@ -18,15 +18,17 @@ namespace MyMovies.Repository
     public class MoviesAPICommunicationRepository : IMoviesAPICommunicationRepository
     {
         private readonly IConfiguration _config;
-        private readonly ILogger _logger;
+        private readonly ILogger<MoviesAPICommunicationRepository> _logger;
         private readonly IJsonReaderService _jsonReaderService;
+        private readonly IHttpHandler _httpClient;
 
         public MoviesAPICommunicationRepository(IJsonReaderService jsonReaderService, IConfiguration config,
-            ILogger<MoviesAPICommunicationRepository> logger)
+            ILogger<MoviesAPICommunicationRepository> logger, IHttpHandler httpClient)
         {
             _jsonReaderService = jsonReaderService;
             _config = config;
             _logger = logger;
+            _httpClient = httpClient;
         }
 
         public async Task<List<MovieDto>> GetMoviesFromSource()
@@ -40,9 +42,9 @@ namespace MyMovies.Repository
             {
                 try
                 {
-                    var httpClient = CreateWorkaroundClient();
-                    httpClient.DefaultRequestHeaders.Add(api.AccessHeader, api.AccessHeaderValue);
-                    var response = httpClient.GetAsync(api.BaseURL).Result;
+                    var headerPair = new Dictionary<string, string>();
+                    headerPair[api.AccessHeader] = api.AccessHeaderValue;
+                    var response = _httpClient.GetAsync(api.BaseURL,headerPair).Result;
                     var responseString = new StreamReader(response.Content.ReadAsStreamAsync().Result).ReadToEndAsync()
                         .Result;
                     var movies = JsonConvert.DeserializeObject<MovieContainer>(responseString).Movies;
@@ -62,7 +64,7 @@ namespace MyMovies.Repository
         {
             var apiSourceFilePath = _config.GetSection("APISourceFile").Get<string>();
             var aPIs = _jsonReaderService.ReadAPISourceInfo(apiSourceFilePath);
-            var getMovieApi = aPIs.Where(api => api.APIUsage == "GetMovieById");
+            var getMovieApi = aPIs.Where(api => api.APIUsage == nameof(GetMovieById));
             var result = new List<MovieDto>();
 
             Parallel.ForEach(request, new ParallelOptions {MaxDegreeOfParallelism = 10}, req =>
@@ -70,9 +72,9 @@ namespace MyMovies.Repository
                 try
                 {
                     var api = getMovieApi.Where(api => api.SiteName == req.SiteName).FirstOrDefault();
-                    var httpClient = CreateWorkaroundClient();
-                    httpClient.DefaultRequestHeaders.Add(api.AccessHeader, api.AccessHeaderValue);
-                    var response = httpClient.GetAsync($"{api.BaseURL}/{req.ID}").Result;
+                    var headerPair = new Dictionary<string, string>();
+                    headerPair[api.AccessHeader] = api.AccessHeaderValue;
+                    var response = _httpClient.GetAsync(api.BaseURL+"/"+ req.ID, headerPair).Result;
                     var responseString = new StreamReader(response.Content.ReadAsStreamAsync().Result).ReadToEndAsync()
                         .Result;
                     var movie = JsonConvert.DeserializeObject<MovieDto>(responseString);
@@ -86,33 +88,6 @@ namespace MyMovies.Repository
             });
 
             return result;
-        }
-
-        private HttpClient CreateWorkaroundClient()
-        {
-            var handler = new SocketsHttpHandler
-            {
-                ConnectCallback = IPv4ConnectAsync
-            };
-            return new HttpClient(handler);
-
-            static async ValueTask<Stream> IPv4ConnectAsync(SocketsHttpConnectionContext context,
-                CancellationToken cancellationToken)
-            {
-                var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                socket.NoDelay = true;
-
-                try
-                {
-                    await socket.ConnectAsync(context.DnsEndPoint, cancellationToken).ConfigureAwait(false);
-                    return new NetworkStream(socket, true);
-                }
-                catch
-                {
-                    socket.Dispose();
-                    throw;
-                }
-            }
         }
     }
 }

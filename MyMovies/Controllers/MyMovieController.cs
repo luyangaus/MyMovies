@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MyMovies.Application;
 using MyMovies.Models;
-using MyMovies.Repository.Interface;
+using MyMovies.Interface;
 
 namespace MyMovies.Controllers
 {
